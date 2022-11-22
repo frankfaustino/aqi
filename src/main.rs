@@ -67,13 +67,13 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     let client = reqwest::Client::new();
-    let args = Aqi::from_args();
+    let Aqi { api_token, command } = Aqi::from_args();
 
-    match args.command {
-        Opt::Info { url }=> {
+    match command {
+        Opt::Info { url } => {
             let response = client
                 .get(format!("https://api.waqi.info/feed/{}/", url))
-                .query(&[("token", args.api_token)])
+                .query(&[("token", api_token)])
                 .send()
                 .await?
                 .json::<InfoResponse>()
@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
             let response = client
                 .get("https://api.waqi.info/search/")
                 .query(&[
-                    ("token", args.api_token),
+                    ("token", api_token),
                     ("keyword", keyword)
                 ])
                 .send()
