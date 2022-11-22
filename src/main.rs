@@ -1,26 +1,26 @@
 use color_eyre::Result;
 // use inflector::Inflector;
 use serde::Deserialize;
-use structopt::StructOpt;
+use clap::{Parser, Subcommand};
 
 // a struct that is converted from command line args and env vars
-#[derive(StructOpt)]
+#[derive(Parser)]
 struct Aqi {
     // sets cli flags and env var as fallback
     // https://docs.rs/structopt/latest/structopt/#environment-variable-fallback
-    #[structopt(
-        short = "t",
-        long = "token",
+    #[arg(
+        short,
+        long,
         env = "AQI_TOKEN"
     )]
     api_token: String,
 
-    #[structopt(subcommand)]
-    command: Opt
+    #[command(subcommand)]
+    command: Command
 }
 
-#[derive(StructOpt)]
-enum Opt {
+#[derive(Subcommand)]
+enum Command {
     Info { url: String },
     Search { keyword: String }
 }
@@ -67,10 +67,10 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
 
     let client = reqwest::Client::new();
-    let Aqi { api_token, command } = Aqi::from_args();
+    let Aqi { api_token, command } = Aqi::parse();
 
     match command {
-        Opt::Info { url } => {
+        Command::Info { url } => {
             let response = client
                 .get(format!("https://api.waqi.info/feed/{}/", url))
                 .query(&[("token", api_token)])
@@ -82,7 +82,7 @@ async fn main() -> Result<()> {
             let StationInfo { city, aqi, .. } = response.data;
             println!("{} aqi: {}", city.name, aqi);
         }
-        Opt::Search { keyword } => {
+        Command::Search { keyword } => {
             let response = client
                 .get("https://api.waqi.info/search/")
                 .query(&[
